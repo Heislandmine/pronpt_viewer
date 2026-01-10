@@ -1,0 +1,20 @@
+appId: com.promptviewer.app
+productName: ComfyUI Prompt Viewer
+directories:
+  output: dist/electron
+  buildResources: build
+files:
+  - dist/main/**
+  - dist/renderer/**
+  - package.json
+extraMetadata:
+  main: dist/main/main.js
+win:
+  target:
+    - nsis
+mac:
+  target:
+    - dmg
+linux:
+  target:
+    - AppImage
