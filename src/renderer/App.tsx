@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { extractComfyUiPromptData, parsePngTextChunks } from "@shared/pngMetadata";
 
 const App = () => {
@@ -6,6 +6,8 @@ const App = () => {
   const [error, setError] = useState<string | null>(null);
   const [filename, setFilename] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<number | null>(null);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -38,6 +40,25 @@ const App = () => {
 
   const payload = extractComfyUiPromptData(chunks);
   const settingsEntries = Object.entries(payload.settings);
+
+  const handleCopy = async (value: string | undefined) => {
+    if (!value) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(value);
+      setToast("クリップボードにコピーしました。");
+      if (toastTimer.current) {
+        window.clearTimeout(toastTimer.current);
+      }
+      toastTimer.current = window.setTimeout(() => {
+        setToast(null);
+        toastTimer.current = null;
+      }, 2000);
+    } catch {
+      setError("クリップボードへのコピーに失敗しました。");
+    }
+  };
 
   return (
     <div className="app">
@@ -77,11 +98,31 @@ const App = () => {
 
         <aside className="side-panel">
           <div className="card">
-            <h2>ポジティブプロンプト</h2>
+            <div className="card-header">
+              <h2>ポジティブプロンプト</h2>
+              <button
+                type="button"
+                className="copy-button"
+                onClick={() => handleCopy(payload.positivePrompt)}
+                disabled={!payload.positivePrompt}
+              >
+                コピー
+              </button>
+            </div>
             <pre>{payload.positivePrompt ?? "未検出"}</pre>
           </div>
           <div className="card">
-            <h2>ネガティブプロンプト</h2>
+            <div className="card-header">
+              <h2>ネガティブプロンプト</h2>
+              <button
+                type="button"
+                className="copy-button"
+                onClick={() => handleCopy(payload.negativePrompt)}
+                disabled={!payload.negativePrompt}
+              >
+                コピー
+              </button>
+            </div>
             <pre>{payload.negativePrompt ?? "未検出"}</pre>
           </div>
           <div className="card">
@@ -101,6 +142,8 @@ const App = () => {
           </div>
         </aside>
       </section>
+
+      {toast && <div className="toast">{toast}</div>}
     </div>
   );
 };
