@@ -9,6 +9,7 @@ const App = () => {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
 
+  // Load PNG file and parse ComfyUI metadata.
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -41,6 +42,7 @@ const App = () => {
   const payload = extractComfyUiPromptData(chunks);
   const settingsEntries = Object.entries(payload.settings);
 
+  // Copy prompt text and show a short toast on success.
   const handleCopy = async (value: string | undefined) => {
     if (!value) {
       return;
@@ -96,6 +98,7 @@ const App = () => {
           )}
         </div>
 
+        {/* Right-side panel for prompts and settings */}
         <aside className="side-panel">
           <div className="card">
             <div className="card-header">

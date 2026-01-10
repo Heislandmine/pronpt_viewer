@@ -4,8 +4,10 @@ export type PngTextChunk = {
   type: "tEXt" | "iTXt" | "zTXt";
 };
 
+// PNGシグネチャを検証するための固定バイト列。
 const pngSignature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 
+// 指定エンコーディングで文字列に変換できない場合はUTF-8にフォールバックする。
 const decodeText = (bytes: Uint8Array, encoding: string) => {
   try {
     return new TextDecoder(encoding).decode(bytes);
@@ -14,6 +16,7 @@ const decodeText = (bytes: Uint8Array, encoding: string) => {
   }
 };
 
+// NULL区切りの位置を探す（-1 は見つからない）。
 const findNullIndex = (bytes: Uint8Array, start = 0) => {
   for (let i = start; i < bytes.length; i += 1) {
     if (bytes[i] === 0) {
@@ -26,6 +29,7 @@ const findNullIndex = (bytes: Uint8Array, start = 0) => {
 const readChunkType = (bytes: Uint8Array, start: number) =>
   String.fromCharCode(...bytes.slice(start, start + 4));
 
+// PNGのテキストチャンク（tEXt/iTXt/zTXt）を抽出する。
 export const parsePngTextChunks = (buffer: ArrayBuffer): PngTextChunk[] => {
   const bytes = new Uint8Array(buffer);
   for (let i = 0; i < pngSignature.length; i += 1) {
@@ -109,6 +113,7 @@ export type ComfyUiPromptData = {
   settings: Record<string, string>;
 };
 
+// JSONとして解析できない場合は文字列のまま返す。
 const safeJsonParse = (value: string) => {
   try {
     return JSON.parse(value);
@@ -117,6 +122,7 @@ const safeJsonParse = (value: string) => {
   }
 };
 
+// 配列ではないオブジェクトのみをRecordとして扱う。
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return value as Record<string, unknown>;
@@ -124,6 +130,7 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
   return null;
 };
 
+// ComfyUIノード構造として扱える形に正規化する。
 const asNode = (value: unknown): ComfyUiNode | null => {
   const record = asRecord(value);
   if (!record) {
@@ -135,6 +142,7 @@ const asNode = (value: unknown): ComfyUiNode | null => {
   };
 };
 
+// "nodeId, outputIndex" 形式の参照から nodeId を取得する。
 const getConnectionNodeId = (value: unknown): string | null => {
   if (Array.isArray(value) && typeof value[0] === "string") {
     return value[0];
@@ -142,6 +150,7 @@ const getConnectionNodeId = (value: unknown): string | null => {
   return null;
 };
 
+// 設定値として表示できるプリミティブを文字列化する。
 const coerceSimpleValue = (value: unknown): string | null => {
   if (typeof value === "string") {
     return value;
@@ -152,6 +161,7 @@ const coerceSimpleValue = (value: unknown): string | null => {
   return null;
 };
 
+// ComfyUIのprompt JSONからポジ/ネガと生成設定を抽出する。
 export const extractComfyUiPromptData = (
   chunks: PngTextChunk[]
 ): ComfyUiPromptData => {
